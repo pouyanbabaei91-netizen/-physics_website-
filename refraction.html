@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>آزمایش شکست نور</title>
+
+<style>
+
+body{
+font-family:tahoma;
+background:#f4f6fb;
+margin:0;
+padding:0;
+text-align:center;
+}
+
+header{
+background:#1e2a38;
+color:white;
+padding:15px;
+font-size:22px;
+}
+
+.container{
+max-width:1000px;
+margin:auto;
+padding:20px;
+}
+
+.controls{
+display:flex;
+flex-wrap:wrap;
+justify-content:center;
+gap:15px;
+margin-bottom:20px;
+}
+
+.control-box{
+background:white;
+padding:10px 15px;
+border-radius:8px;
+box-shadow:0 2px 5px rgba(0,0,0,0.1);
+}
+
+canvas{
+background:white;
+border:2px solid #ddd;
+border-radius:8px;
+}
+
+label{
+font-size:14px;
+}
+
+input,select{
+margin-top:5px;
+padding:5px;
+}
+
+.info{
+margin-top:15px;
+font-size:18px;
+}
+
+</style>
+</head>
+
+<body>
+
+<header>
+آزمایش شکست نور در دو محیط
+</header>
+
+<div class="container">
+
+<p>
+در این آزمایش می‌توانید شکست نور بین دو محیط را مشاهده کنید. زاویه تابش را تغییر دهید و ببینید چگونه طبق قانون اسنل مسیر نور تغییر می‌کند.
+</p>
+
+<div class="controls">
+
+<div class="control-box">
+<label>زاویه تابش</label><br>
+<input type="range" id="angle" min="0" max="80" value="30">
+<span id="angleValue">30°</span>
+</div>
+
+<div class="control-box">
+<label>محیط اول</label><br>
+<select id="medium1">
+<option value="1">هوا (1.00)</option>
+<option value="1.33">آب (1.33)</option>
+<option value="1.5">شیشه (1.5)</option>
+</select>
+</div>
+
+<div class="control-box">
+<label>محیط دوم</label><br>
+<select id="medium2">
+<option value="1.33">آب (1.33)</option>
+<option value="1.5">شیشه (1.5)</option>
+<option value="1">هوا (1.00)</option>
+</select>
+</div>
+
+</div>
+
+<canvas id="canvas" width="800" height="450"></canvas>
+
+<div class="info">
+θ₁ = <span id="theta1">30</span>°
+&nbsp;&nbsp;&nbsp;
+θ₂ = <span id="theta2">---</span>°
+</div>
+
+</div>
+
+<script>
+
+const canvas=document.getElementById("canvas");
+const ctx=canvas.getContext("2d");
+
+const angleSlider=document.getElementById("angle");
+const angleValue=document.getElementById("angleValue");
+
+const medium1=document.getElementById("medium1");
+const medium2=document.getElementById("medium2");
+
+const theta1Text=document.getElementById("theta1");
+const theta2Text=document.getElementById("theta2");
+
+const width=canvas.width;
+const height=canvas.height;
+
+const boundaryY=height/2;
+const normalX=width/2;
+
+function draw(){
+
+ctx.clearRect(0,0,width,height);
+
+let angleDeg=parseFloat(angleSlider.value);
+let theta1=angleDeg*Math.PI/180;
+
+let n1=parseFloat(medium1.value);
+let n2=parseFloat(medium2.value);
+
+angleValue.textContent=angleDeg+"°";
+theta1Text.textContent=angleDeg;
+
+ctx.fillStyle="#dbeafe";
+ctx.fillRect(0,0,width,boundaryY);
+
+ctx.fillStyle="#bfdbfe";
+ctx.fillRect(0,boundaryY,width,boundaryY);
+
+ctx.strokeStyle="black";
+ctx.lineWidth=2;
+ctx.beginPath();
+ctx.moveTo(0,boundaryY);
+ctx.lineTo(width,boundaryY);
+ctx.stroke();
+
+ctx.setLineDash([5,5]);
+ctx.beginPath();
+ctx.moveTo(normalX,0);
+ctx.lineTo(normalX,height);
+ctx.stroke();
+ctx.setLineDash([]);
+
+let rayLength=300;
+
+let startX=normalX-Math.sin(theta1)*rayLength;
+let startY=boundaryY-Math.cos(theta1)*rayLength;
+
+ctx.strokeStyle="red";
+ctx.lineWidth=3;
+ctx.beginPath();
+ctx.moveTo(startX,startY);
+ctx.lineTo(normalX,boundaryY);
+ctx.stroke();
+
+let sin2=(n1/n2)*Math.sin(theta1);
+
+if(Math.abs(sin2)<=1){
+
+let theta2=Math.asin(sin2);
+let endX=normalX+Math.sin(theta2)*rayLength;
+let endY=boundaryY+Math.cos(theta2)*rayLength;
+
+ctx.strokeStyle="blue";
+ctx.beginPath();
+ctx.moveTo(normalX,boundaryY);
+ctx.lineTo(endX,endY);
+ctx.stroke();
+
+theta2Text.textContent=(theta2*180/Math.PI).toFixed(1);
+
+}else{
+
+let reflectAngle=theta1;
+
+let endX=normalX+Math.sin(reflectAngle)*rayLength;
+let endY=boundaryY-Math.cos(reflectAngle)*rayLength;
+
+ctx.strokeStyle="orange";
+ctx.beginPath();
+ctx.moveTo(normalX,boundaryY);
+ctx.lineTo(endX,endY);
+ctx.stroke();
+
+theta2Text.textContent="بازتاب کلی";
+
+}
+
+ctx.fillStyle="black";
+ctx.font="16px Tahoma";
+ctx.fillText("θ₁",normalX-40,boundaryY-20);
+ctx.fillText("θ₂",normalX+20,boundaryY+30);
+
+}
+
+angleSlider.oninput=draw;
+medium1.onchange=draw;
+medium2.onchange=draw;
+
+draw();
+
+</script>
+
+</body>
+</html>
