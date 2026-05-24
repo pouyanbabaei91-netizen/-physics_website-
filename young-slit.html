@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="fa">
+<head>
+<meta charset="UTF-8">
+<title>آزمایش دو شکاف یانگ - نسخه پیشرفته</title>
+
+<style>
+    body {
+        background: #0c0c0c;
+        color: #fff;
+        font-family: Vazirmatn, sans-serif;
+        text-align: center;
+        padding: 20px;
+        line-height: 1.9;
+    }
+
+    canvas {
+        background: black;
+        border-radius: 12px;
+        margin-top: 20px;
+    }
+
+    #panel {
+        background: #1a1a1a;
+        padding: 20px;
+        border-radius: 12px;
+        margin-top: 25px;
+        width: 70%;
+        margin-left: auto;
+        margin-right: auto;
+        text-align: right;
+    }
+
+    #startBtn {
+        background: #008cff;
+        border: none;
+        padding: 12px 25px;
+        color: white;
+        border-radius: 8px;
+        font-size: 18px;
+        cursor: pointer;
+        margin-top: 20px;
+        transition: 0.3s;
+    }
+    #startBtn:hover {
+        background: #0070d4;
+    }
+
+    .slider-box {
+        margin-top: 25px;
+        font-size: 16px;
+    }
+
+    #speedSlider {
+        width: 60%;
+        margin-top: 10px;
+    }
+</style>
+
+</head>
+
+<body>
+
+<h1>شبیه‌سازی دینامیک آزمایش دو شکاف یانگ</h1>
+<p>مدل‌سازی موجی - تشکیل الگوی تداخل در زمان واقعی</p>
+
+<canvas id="youngCanvas" width="700" height="300"></canvas>
+
+<button id="startBtn">شروع آزمایش</button>
+
+<div class="slider-box">
+    سرعت آزمایش:
+    <input type="range" id="speedSlider" min="1" max="10" value="5">
+</div>
+
+<div id="panel">
+    <strong>توضیحات آزمایش:</strong>
+    <p id="explain">برای شروع آزمایش دکمه بالا را بزنید.</p>
+</div>
+
+<script>
+let running = false;
+let t = 0;
+let speed = 5;
+
+const canvas = document.getElementById("youngCanvas");
+const ctx = canvas.getContext("2d");
+const w = canvas.width;
+const h = canvas.height;
+
+document.getElementById("speedSlider").oninput = function() {
+    speed = Number(this.value);
+};
+
+document.getElementById("startBtn").onclick = function() {
+    if (!running) {
+        running = true;
+        document.getElementById("explain").innerText =
+            "موج‌ها از دو شکاف شروع به انتشار می‌کنند...";
+        animate();
+    }
+};
+
+function animate() {
+    if (!running) return;
+
+    t += 0.05 * speed;
+
+    ctx.clearRect(0, 0, w, h);
+
+    const slit1 = h / 2 - 40;
+    const slit2 = h / 2 + 40;
+
+    // موج‌های دو شکاف
+    for (let x = 0; x < w; x++) {
+        for (let y = 0; y < h; y++) {
+            const d1 = Math.sqrt((x - 100)**2 + (y - slit1)**2);
+            const d2 = Math.sqrt((x - 100)**2 + (y - slit2)**2);
+
+            const wave =
+                Math.sin(d1 * 0.08 - t) +
+                Math.sin(d2 * 0.08 - t);
+
+            const intensity = (wave + 2) / 4;
+            const I = Math.floor(intensity * 255);
+
+            ctx.fillStyle = `rgb(${I}, ${I}, ${I})`;
+            ctx.fillRect(x, y, 1, 1);
+        }
+    }
+
+    // توضیحات مرحله‌ای
+    if (t < 10) {
+        document.getElementById("explain").innerText =
+            "دو چشمه‌ی هم‌فاز در فاصله‌ی بسیار کوچک امواج کروی منتشر می‌کنند...";
+    } 
+    else if (t < 20) {
+        document.getElementById("explain").innerText =
+            "هم‌پوشانی موج‌ها باعث تقویت (نوارهای روشن) و تضعیف (نوارهای تاریک) می‌شود...";
+    }
+    else if (t < 35) {
+        document.getElementById("explain").innerText =
+            "الگوی تداخل روی پرده به آرامی پایدار می‌شود...";
+    }
+    else {
+        document.getElementById("explain").innerText =
+            "الگوی نهایی تداخل دو شکاف یانگ تشکیل شد.";
+    }
+
+    requestAnimationFrame(animate);
+}
+</script>
+
+</body>
+</html>
