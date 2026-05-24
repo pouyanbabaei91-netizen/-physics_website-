@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="fa">
+<head>
+<meta charset="UTF-8">
+<title>درسنامه فصل ۴</title>
+
+<style>
+
+body{
+direction:rtl;
+margin:0;
+font-family:tahoma;
+background:white;
+}
+
+/* صفحه اصلی */
+.container{
+display:flex;
+height:100vh;
+}
+
+/* بخش سمت چپ برای فایل ها */
+.content{
+flex:2;
+padding:40px;
+}
+
+/* عنوان */
+.content h2{
+margin-top:0;
+color:#222;
+}
+
+/* لیست فایل ها */
+.file-list a{
+display:block;
+padding:10px;
+margin:8px 0;
+background:#f2f2f2;
+text-decoration:none;
+color:black;
+border-radius:6px;
+}
+
+.file-list a:hover{
+background:#00ff9d;
+}
+
+/* بخش تصویر سمت راست */
+.image-side{
+flex:1;
+display:flex;
+align-items:center;
+justify-content:center;
+border-left:1px solid #ddd;
+}
+
+/* تصویر */
+.image-side img{
+width:300px;
+border-radius:10px;
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<!-- بخش فایل ها -->
+<div class="content">
+
+<h2>درسنامه فصل ۴</h2>
+
+<p>در این بخش می‌توانید فایل‌های آموزشی را تمرین کنید:</p>
+
+<div class="file-list">
+
+<a href="file4.pdf">تحقیق ویژگی های نور</a>
+
+</div>
+
+</div>
+
+<!-- تصویر سمت راست -->
+<div class="image-side">
+
+
+
+</div>
+
+</div>
+
+</body>
+</html>
+<style>
+
+.image-box {
+    width: 300px;
+    height: 300px;
+    border: 3px solid #1e90ff;
+    border-radius: 10px;
+    overflow: hidden;
+    background: #cfe8ff;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.image-box img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    pointer-events: none;
+}
+
+</style>
