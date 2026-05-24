@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="fa">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Physics World</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div class="stars"></div>
+    <h1 class="title">Physics World</h1>
+    <div class="title-bar"></div>
+
+</body>
+<body>
+  <meta name="description" content="Physics.com">
+
+  <div class="title-bar">
+
+
+    <ul class="menu">
+
+        <li class="menu-item">
+            فصل4
+            <ul class="dropdown">
+                <li><a href="vijeghi-noor.html">ویژگی های نور</a></li>
+                <li><a href="darsnameh4.html">درسنامه</a></li>
+                <li><a href="refraction.html">آزمایش شکست نور</a></li>
+
+            </ul>
+        </li>
+        <li class="menu-item">
+            آزمایش
+            <ul class="dropdown">
+                <li><a href="young-slit.html">آزمایش دو شکاف یانگ</a></li>
+                <li><a href="tabesh.html">آزمایش تابش</a></li>
+
+            </ul>
+        </li>
+        <li class="menu-item">
+            تصویر
+            <ul class="dropdown">
+                <li id="zoom-in">Zoom In</li>
+                <li id="zoom-out">Zoom Out</li>
+
+            </ul>
+        </li>
+        <li class="menu-item">
+            اطلاعات سایت
+            <ul class="dropdown">
+                <li><a href="about.html">درباره سایت</a></li>
+            </ul>
+        </li>
+
+    </ul>
+
+    </div>
+
+</div>
+
+</html>
+<body>
+<script>
+    let zoomLevel = 1;
+
+    // زوم
+    document.getElementById("zoom-in").onclick = function() {
+        zoomLevel += 0.1;
+        document.body.style.transform = "scale(" + zoomLevel + ")";
+        document.body.style.transformOrigin = "0 0";
+    };
+
+    document.getElementById("zoom-out").onclick = function() {
+        zoomLevel -= 0.1;
+        document.body.style.transform = "scale(" + zoomLevel + ")";
+        document.body.style.transformOrigin = "0 0";
+    };
+
+    // باز ماندن Dropdown با کلیک
+    const viewMenu = document.getElementById("view-menu");
+
+    viewMenu.addEventListener("click", function(event) {
+
+        // جلوگیری از بسته شدن لحظه‌ای به خاطر hover
+        event.stopPropagation();
+
+        // فعال/غیر فعال کردن حالت active
+        viewMenu.classList.toggle("active");
+    });
+
+    // اگر جای دیگری از صفحه کلیک شد → dropdown بسته شود
+    document.addEventListener("click", function() {
+        viewMenu.classList.remove("active");
+    });
+</script>
+
+</body>
