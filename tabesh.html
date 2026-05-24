@@ -1,0 +1,1004 @@
+<!DOCTYPE html>
+<html lang="fa">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+
+<title>آزمایش بازتاب نور</title>
+
+<style>
+
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+}
+
+body{
+    background:#1e1e1e;
+    overflow:hidden;
+    direction:rtl;
+    font-family:tahoma;
+    color:white;
+}
+
+#topBar{
+    position:absolute;
+    top:10px;
+    right:10px;
+    z-index:1000;
+    display:flex;
+    gap:10px;
+    align-items:center;
+}
+
+button{
+    padding:10px 18px;
+    border:none;
+    border-radius:8px;
+    cursor:pointer;
+    background:#00d084;
+    color:#000;
+    font-weight:bold;
+    font-size:15px;
+}
+
+button:hover{
+    background:#00ff9d;
+}
+
+#message{
+    position:absolute;
+    top:70px;
+    right:10px;
+    background:#2f2f2f;
+    padding:12px 18px;
+    border-radius:10px;
+    z-index:1000;
+    min-width:350px;
+    line-height:1.8;
+    font-size:15px;
+    border:1px solid #555;
+}
+
+#controlPanel{
+    position:absolute;
+    bottom:15px;
+    right:15px;
+    z-index:1000;
+    background:#2b2b2b;
+    border-radius:12px;
+    padding:15px;
+    width:280px;
+    border:1px solid #444;
+}
+
+#controlPanel h3{
+    margin-bottom:10px;
+    color:#00ff9d;
+}
+
+.row{
+    margin-bottom:12px;
+}
+
+label{
+    display:block;
+    margin-bottom:6px;
+}
+
+input[type=range]{
+    width:100%;
+}
+
+input[type=number]{
+    width:100%;
+    padding:8px;
+    border:none;
+    border-radius:6px;
+    background:#444;
+    color:white;
+}
+
+canvas{
+    background:#161616;
+    display:block;
+}
+
+.infoBox{
+    margin-top:10px;
+    background:#3a3a3a;
+    padding:10px;
+    border-radius:8px;
+    line-height:1.8;
+}
+
+#helpBox{
+    position:absolute;
+    left:10px;
+    top:10px;
+    z-index:1000;
+    width:290px;
+    background:#2c2c2c;
+    border-radius:12px;
+    padding:15px;
+    border:1px solid #444;
+    line-height:1.9;
+}
+
+.green{
+    color:#00ff9d;
+}
+
+.yellow{
+    color:yellow;
+}
+
+.cyan{
+    color:cyan;
+}
+
+</style>
+</head>
+
+<body>
+
+<div id="topBar">
+
+<button id="startBtn">
+شروع آزمایش
+</button>
+
+<button id="resetBtn">
+ریست
+</button>
+
+</div>
+
+<div id="message">
+ابتدا آینه را جابه‌جا یا اندازه آن را تنظیم کنید.
+</div>
+
+<div id="helpBox">
+
+<h3 class="green">راهنما</h3>
+
+<div>
+• دایره‌های سبز = تغییر اندازه آینه
+</div>
+
+<div>
+• مرکز آینه = جابه‌جایی کل آینه
+</div>
+
+<div>
+• بعد از شروع آزمایش:
+</div>
+
+<div>
+• با حرکت موس زاویه تابش تغییر می‌کند
+</div>
+
+<div>
+• زاویه تابش و بازتاب برابر هستند
+</div>
+
+</div>
+
+<div id="controlPanel">
+
+<h3>کنترل زاویه</h3>
+
+<div class="row">
+<label>زاویه تابش</label>
+<input type="range" min="-89" max="89" value="25" id="angleSlider">
+</div>
+
+<div class="row">
+<input type="number" value="25" id="angleInput">
+</div>
+
+<div class="infoBox">
+
+<div>
+زاویه تابش:
+<span id="iValue" class="yellow">0</span>
+°
+</div>
+
+<div>
+زاویه بازتاب:
+<span id="rValue" class="cyan">0</span>
+°
+</div>
+
+</div>
+
+</div>
+
+<canvas id="canvas"></canvas>
+
+<script>
+
+//////////////////////////////////////////////////////////
+// تنظیمات اولیه
+//////////////////////////////////////////////////////////
+
+const canvas = document.getElementById("canvas");
+const ctx = canvas.getContext("2d");
+
+function resizeCanvas(){
+
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+}
+
+resizeCanvas();
+
+window.addEventListener("resize", resizeCanvas);
+
+//////////////////////////////////////////////////////////
+// وضعیت آزمایش
+//////////////////////////////////////////////////////////
+
+let experimentStarted = false;
+
+//////////////////////////////////////////////////////////
+// آینه
+//////////////////////////////////////////////////////////
+
+let mirror = {
+
+    x1:900,
+    y1:250,
+
+    x2:1200,
+    y2:350
+
+};
+
+//////////////////////////////////////////////////////////
+// پرتو
+//////////////////////////////////////////////////////////
+
+let ray = {
+
+    x:250,
+    y:350,
+
+    angle:25
+
+};
+
+//////////////////////////////////////////////////////////
+// موس
+//////////////////////////////////////////////////////////
+
+let mouse = {
+
+    x:0,
+    y:0
+
+};
+
+//////////////////////////////////////////////////////////
+// وضعیت Drag
+//////////////////////////////////////////////////////////
+
+let draggingPoint1 = false;
+let draggingPoint2 = false;
+let draggingMirror = false;
+
+//////////////////////////////////////////////////////////
+// اندازه هندل
+//////////////////////////////////////////////////////////
+
+const HANDLE_RADIUS = 14;
+
+//////////////////////////////////////////////////////////
+// بررسی فاصله
+//////////////////////////////////////////////////////////
+
+function distance(x1,y1,x2,y2){
+
+    return Math.sqrt(
+        (x2-x1)*(x2-x1) +
+        (y2-y1)*(y2-y1)
+    );
+
+}
+
+//////////////////////////////////////////////////////////
+// وسط آینه
+//////////////////////////////////////////////////////////
+
+function getMirrorCenter(){
+
+    return {
+
+        x:(mirror.x1 + mirror.x2)/2,
+        y:(mirror.y1 + mirror.y2)/2
+
+    };
+
+}
+
+//////////////////////////////////////////////////////////
+// پیام
+//////////////////////////////////////////////////////////
+
+function setMessage(text){
+
+    document.getElementById("message").innerText = text;
+
+}
+
+//////////////////////////////////////////////////////////
+// رسم پس‌زمینه
+//////////////////////////////////////////////////////////
+
+function drawBackground(){
+
+    ctx.fillStyle = "#161616";
+    ctx.fillRect(0,0,canvas.width,canvas.height);
+
+}
+
+//////////////////////////////////////////////////////////
+// رسم شبکه
+//////////////////////////////////////////////////////////
+
+function drawGrid(){
+
+    ctx.strokeStyle = "#242424";
+    ctx.lineWidth = 1;
+
+    for(let x=0;x<canvas.width;x+=50){
+
+        ctx.beginPath();
+        ctx.moveTo(x,0);
+        ctx.lineTo(x,canvas.height);
+        ctx.stroke();
+
+    }
+
+    for(let y=0;y<canvas.height;y+=50){
+
+        ctx.beginPath();
+        ctx.moveTo(0,y);
+        ctx.lineTo(canvas.width,y);
+        ctx.stroke();
+
+    }
+
+}
+
+//////////////////////////////////////////////////////////
+// رسم آینه
+//////////////////////////////////////////////////////////
+
+function drawMirror(){
+
+    ctx.strokeStyle = "#00ff9d";
+    ctx.lineWidth = 6;
+
+    ctx.beginPath();
+
+    ctx.moveTo(mirror.x1, mirror.y1);
+    ctx.lineTo(mirror.x2, mirror.y2);
+
+    ctx.stroke();
+
+}
+
+//////////////////////////////////////////////////////////
+// رسم نقاط کنترل
+//////////////////////////////////////////////////////////
+
+function drawHandles(){
+
+    drawHandle(mirror.x1, mirror.y1);
+    drawHandle(mirror.x2, mirror.y2);
+
+    const center = getMirrorCenter();
+
+    ctx.beginPath();
+
+    ctx.fillStyle = "rgba(0,255,180,0.3)";
+
+    ctx.arc(center.x, center.y, 20, 0, Math.PI*2);
+
+    ctx.fill();
+
+    ctx.strokeStyle = "#00ff9d";
+
+    ctx.stroke();
+
+}
+
+//////////////////////////////////////////////////////////
+// رسم یک هندل
+//////////////////////////////////////////////////////////
+
+function drawHandle(x,y){
+
+    ctx.beginPath();
+
+    ctx.fillStyle = "#00ff9d";
+
+    ctx.arc(x,y,HANDLE_RADIUS,0,Math.PI*2);
+
+    ctx.fill();
+
+    ctx.strokeStyle = "#003";
+
+    ctx.lineWidth = 2;
+
+    ctx.stroke();
+
+}
+
+//////////////////////////////////////////////////////////
+// تبدیل زاویه
+//////////////////////////////////////////////////////////
+
+function degToRad(deg){
+
+    return deg * Math.PI / 180;
+
+}
+
+//////////////////////////////////////////////////////////
+// محاسبه برخورد
+//////////////////////////////////////////////////////////
+
+function getIntersection(){
+
+    let rayAngle = degToRad(ray.angle);
+
+    let dx = Math.cos(rayAngle);
+    let dy = Math.sin(rayAngle);
+
+    let x1 = ray.x;
+    let y1 = ray.y;
+
+    let x2 = ray.x + dx * 4000;
+    let y2 = ray.y + dy * 4000;
+
+    let x3 = mirror.x1;
+    let y3 = mirror.y1;
+
+    let x4 = mirror.x2;
+    let y4 = mirror.y2;
+
+    let denominator =
+        (x1-x2)*(y3-y4) -
+        (y1-y2)*(x3-x4);
+
+    if(denominator === 0){
+
+        return null;
+
+    }
+
+    let t =
+        (
+            (x1-x3)*(y3-y4) -
+            (y1-y3)*(x3-x4)
+        ) / denominator;
+
+    let u =
+        -(
+            (x1-x2)*(y1-y3) -
+            (y1-y2)*(x1-x3)
+        ) / denominator;
+
+    if(t > 0 && u >=0 && u <=1){
+
+        return {
+
+            x:x1 + t*(x2-x1),
+            y:y1 + t*(y2-y1)
+
+        };
+
+    }
+
+    return null;
+
+}
+
+//////////////////////////////////////////////////////////
+// رسم پرتو تابش
+//////////////////////////////////////////////////////////
+
+function drawIncidentRay(intersection){
+
+    ctx.strokeStyle = "yellow";
+
+    ctx.lineWidth = 3;
+
+    ctx.beginPath();
+
+    ctx.moveTo(ray.x, ray.y);
+
+    ctx.lineTo(intersection.x, intersection.y);
+
+    ctx.stroke();
+
+}
+
+//////////////////////////////////////////////////////////
+// رسم خط عمود
+//////////////////////////////////////////////////////////
+
+function drawNormal(intersection){
+
+    let dx = mirror.x2 - mirror.x1;
+    let dy = mirror.y2 - mirror.y1;
+
+    let nx = -dy;
+    let ny = dx;
+
+    let length = Math.sqrt(nx*nx + ny*ny);
+
+    nx /= length;
+    ny /= length;
+
+    ctx.setLineDash([8,8]);
+
+    ctx.strokeStyle = "#cccccc";
+
+    ctx.lineWidth = 2;
+
+    ctx.beginPath();
+
+    ctx.moveTo(
+        intersection.x - nx*120,
+        intersection.y - ny*120
+    );
+
+    ctx.lineTo(
+        intersection.x + nx*120,
+        intersection.y + ny*120
+    );
+
+    ctx.stroke();
+
+    ctx.setLineDash([]);
+
+}
+
+//////////////////////////////////////////////////////////
+// رسم بازتاب
+//////////////////////////////////////////////////////////
+
+function drawReflection(intersection){
+
+    let mirrorDX = mirror.x2 - mirror.x1;
+    let mirrorDY = mirror.y2 - mirror.y1;
+
+    let mirrorLength = Math.sqrt(
+        mirrorDX*mirrorDX +
+        mirrorDY*mirrorDY
+    );
+
+    let nx = -mirrorDY / mirrorLength;
+    let ny = mirrorDX / mirrorLength;
+
+    let angle = degToRad(ray.angle);
+
+    let dx = Math.cos(angle);
+    let dy = Math.sin(angle);
+
+    let dot = dx*nx + dy*ny;
+
+    let rx = dx - 2*dot*nx;
+    let ry = dy - 2*dot*ny;
+
+    ctx.strokeStyle = "cyan";
+
+    ctx.lineWidth = 3;
+
+    ctx.beginPath();
+
+    ctx.moveTo(intersection.x, intersection.y);
+
+    ctx.lineTo(
+        intersection.x + rx*700,
+        intersection.y + ry*700
+    );
+
+    ctx.stroke();
+
+}
+
+//////////////////////////////////////////////////////////
+// نمایش زاویه‌ها
+//////////////////////////////////////////////////////////
+
+function updateAngles(){
+
+    let angle = Math.abs(ray.angle);
+
+    document.getElementById("iValue").innerText =
+        angle.toFixed(1);
+
+    document.getElementById("rValue").innerText =
+        angle.toFixed(1);
+
+}
+
+//////////////////////////////////////////////////////////
+// رسم منبع نور
+//////////////////////////////////////////////////////////
+
+function drawLightSource(){
+
+    ctx.beginPath();
+
+    ctx.fillStyle = "orange";
+
+    ctx.arc(ray.x, ray.y, 14, 0, Math.PI*2);
+
+    ctx.fill();
+
+    ctx.shadowBlur = 20;
+
+    ctx.shadowColor = "orange";
+
+    ctx.fill();
+
+    ctx.shadowBlur = 0;
+
+}
+
+//////////////////////////////////////////////////////////
+// رسم متن روی صفحه
+//////////////////////////////////////////////////////////
+
+function drawLabels(){
+
+    ctx.fillStyle = "white";
+
+    ctx.font = "18px tahoma";
+
+    ctx.fillText(
+        "منبع نور",
+        ray.x - 20,
+        ray.y - 25
+    );
+
+}
+
+//////////////////////////////////////////////////////////
+// رسم کامل
+//////////////////////////////////////////////////////////
+
+function drawScene(){
+
+    drawBackground();
+
+    drawGrid();
+
+    drawMirror();
+
+    drawHandles();
+
+    drawLightSource();
+
+    drawLabels();
+
+    if(experimentStarted){
+
+        let intersection = getIntersection();
+
+        if(intersection){
+
+            drawIncidentRay(intersection);
+
+            drawNormal(intersection);
+
+            drawReflection(intersection);
+
+            updateAngles();
+
+        }
+
+    }
+
+    requestAnimationFrame(drawScene);
+
+}
+
+drawScene();
+
+//////////////////////////////////////////////////////////
+// شروع آزمایش
+//////////////////////////////////////////////////////////
+
+document.getElementById("startBtn").addEventListener("click", function(){
+
+    experimentStarted = true;
+
+    setMessage(
+        "پرتو را قرار دهید و با حرکت موس زاویه تابش را تنظیم کنید."
+    );
+
+});
+
+//////////////////////////////////////////////////////////
+// ریست
+//////////////////////////////////////////////////////////
+
+document.getElementById("resetBtn").addEventListener("click", function(){
+
+    experimentStarted = false;
+
+    mirror.x1 = 900;
+    mirror.y1 = 250;
+
+    mirror.x2 = 1200;
+    mirror.y2 = 350;
+
+    ray.angle = 25;
+
+    document.getElementById("angleSlider").value = 25;
+    document.getElementById("angleInput").value = 25;
+
+    setMessage(
+        "ابتدا آینه را جابه‌جا یا اندازه آن را تنظیم کنید."
+    );
+
+});
+
+//////////////////////////////////////////////////////////
+// کنترل اسلایدر
+//////////////////////////////////////////////////////////
+
+document.getElementById("angleSlider").addEventListener("input", function(){
+
+    ray.angle = Number(this.value);
+
+    document.getElementById("angleInput").value =
+        this.value;
+
+});
+
+//////////////////////////////////////////////////////////
+// کنترل ورودی عددی
+//////////////////////////////////////////////////////////
+
+document.getElementById("angleInput").addEventListener("input", function(){
+
+    ray.angle = Number(this.value);
+
+    document.getElementById("angleSlider").value =
+        this.value;
+
+});
+
+//////////////////////////////////////////////////////////
+// موس پایین
+//////////////////////////////////////////////////////////
+
+canvas.addEventListener("mousedown", function(e){
+
+    mouse.x = e.clientX;
+    mouse.y = e.clientY;
+
+    let d1 = distance(
+        mouse.x,
+        mouse.y,
+        mirror.x1,
+        mirror.y1
+    );
+
+    let d2 = distance(
+        mouse.x,
+        mouse.y,
+        mirror.x2,
+        mirror.y2
+    );
+
+    let center = getMirrorCenter();
+
+    let dc = distance(
+        mouse.x,
+        mouse.y,
+        center.x,
+        center.y
+    );
+
+    if(d1 < HANDLE_RADIUS + 5){
+
+        draggingPoint1 = true;
+        return;
+
+    }
+
+    if(d2 < HANDLE_RADIUS + 5){
+
+        draggingPoint2 = true;
+        return;
+
+    }
+
+    if(dc < 25){
+
+        draggingMirror = true;
+        return;
+
+    }
+
+});
+
+//////////////////////////////////////////////////////////
+// رها کردن موس
+//////////////////////////////////////////////////////////
+
+canvas.addEventListener("mouseup", function(){
+
+    draggingPoint1 = false;
+    draggingPoint2 = false;
+    draggingMirror = false;
+
+});
+
+//////////////////////////////////////////////////////////
+// خروج موس
+//////////////////////////////////////////////////////////
+
+canvas.addEventListener("mouseleave", function(){
+
+    draggingPoint1 = false;
+    draggingPoint2 = false;
+    draggingMirror = false;
+
+});
+
+//////////////////////////////////////////////////////////
+// حرکت موس
+//////////////////////////////////////////////////////////
+
+canvas.addEventListener("mousemove", function(e){
+
+    let previousX = mouse.x;
+    let previousY = mouse.y;
+
+    mouse.x = e.clientX;
+    mouse.y = e.clientY;
+
+    //////////////////////////////////////////////////////
+    // تغییر زاویه با موس
+    //////////////////////////////////////////////////////
+
+    if(experimentStarted){
+
+        let dx = mouse.x - ray.x;
+        let dy = mouse.y - ray.y;
+
+        let angle =
+            Math.atan2(dy, dx) * 180 / Math.PI;
+
+        ray.angle = angle;
+
+        document.getElementById("angleSlider").value =
+            angle;
+
+        document.getElementById("angleInput").value =
+            angle.toFixed(1);
+
+    }
+
+    //////////////////////////////////////////////////////
+    // جابه‌جایی نقطه اول
+    //////////////////////////////////////////////////////
+
+    if(draggingPoint1){
+
+        mirror.x1 = mouse.x;
+        mirror.y1 = mouse.y;
+
+    }
+
+    //////////////////////////////////////////////////////
+    // جابه‌جایی نقطه دوم
+    //////////////////////////////////////////////////////
+
+    if(draggingPoint2){
+
+        mirror.x2 = mouse.x;
+        mirror.y2 = mouse.y;
+
+    }
+
+    //////////////////////////////////////////////////////
+    // جابه‌جایی کل آینه
+    //////////////////////////////////////////////////////
+
+    if(draggingMirror){
+
+        let moveX = mouse.x - previousX;
+        let moveY = mouse.y - previousY;
+
+        mirror.x1 += moveX;
+        mirror.y1 += moveY;
+
+        mirror.x2 += moveX;
+        mirror.y2 += moveY;
+
+    }
+
+});
+
+//////////////////////////////////////////////////////////
+// تغییر ظاهر موس
+//////////////////////////////////////////////////////////
+
+canvas.addEventListener("mousemove", function(e){
+
+    let mx = e.clientX;
+    let my = e.clientY;
+
+    let d1 = distance(mx,my,mirror.x1,mirror.y1);
+
+    let d2 = distance(mx,my,mirror.x2,mirror.y2);
+
+    let center = getMirrorCenter();
+
+    let dc = distance(mx,my,center.x,center.y);
+
+    if(
+        d1 < HANDLE_RADIUS + 5 ||
+        d2 < HANDLE_RADIUS + 5
+    ){
+
+        canvas.style.cursor = "pointer";
+        return;
+
+    }
+
+    if(dc < 25){
+
+        canvas.style.cursor = "move";
+        return;
+
+    }
+
+    if(experimentStarted){
+
+        canvas.style.cursor = "crosshair";
+
+    }
+    else{
+
+        canvas.style.cursor = "default";
+
+    }
+
+});
+
+//////////////////////////////////////////////////////////
+// پیام اولیه
+//////////////////////////////////////////////////////////
+
+setMessage(
+    "ابتدا آینه را تنظیم کنید. سپس روی دکمه شروع آزمایش کلیک کنید."
+);
+
+//////////////////////////////////////////////////////////
+// مقدار اولیه زاویه
+//////////////////////////////////////////////////////////
+
+updateAngles();
+
+//////////////////////////////////////////////////////////
+// پایان
+//////////////////////////////////////////////////////////
+
+</script>
+
+</body>
+</html>
